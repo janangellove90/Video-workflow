@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎥 영상 프롬프트 감독실 — 북트레일러 2회기</title>
+<style>
+  :root{
+    --night:#221D3A; --paper:#FFF9F0; --red:#FF6B4A; --teal:#3E8E7E;
+    --yellow:#FFC93C; --line:#E8DCC8; --soft:#FFF1DB; --ink:#2B2440; --purple:#8A6CCF;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Apple SD Gothic Neo","Malgun Gothic","맑은 고딕",sans-serif;
+    background:var(--paper); color:var(--ink); padding:24px 16px 60px;
+    background-image:radial-gradient(var(--line) 1px, transparent 1px);
+    background-size:26px 26px;
+  }
+  .wrap{max-width:900px; margin:0 auto;}
+
+  /* 필름 헤더 */
+  .film{background:var(--night); border-radius:16px; margin-bottom:20px;
+    box-shadow:0 6px 0 rgba(43,36,64,.15); overflow:hidden;}
+  .holes{display:flex; justify-content:space-between; padding:8px 14px;}
+  .holes i{width:16px; height:11px; background:var(--paper); border-radius:3px;}
+  .film-body{padding:8px 24px 20px; color:#FFF9F0;}
+  .film-body h1{font-size:26px;} .film-body h1 em{font-style:normal; color:var(--yellow);}
+  .film-body p{margin-top:6px; font-size:14px; opacity:.85;}
+
+  /* 모드 탭 */
+  .tabs{display:flex; gap:10px; margin-bottom:20px;}
+  .tab{flex:1; border:2px solid var(--ink); border-radius:14px; padding:14px 10px;
+    background:#fff; cursor:pointer; text-align:center; font-size:15px; font-weight:800;
+    box-shadow:0 4px 0 rgba(43,36,64,.12);}
+  .tab small{display:block; font-weight:400; font-size:11.5px; color:#8a7f70; margin-top:3px;}
+  .tab.on{background:var(--ink); color:var(--yellow);}
+  .tab.on small{color:#BFB8D6;}
+  .pane{display:none;} .pane.on{display:block;}
+
+  .step{background:#fff; border:2px solid var(--ink); border-radius:14px;
+    padding:18px 20px; margin-bottom:16px; box-shadow:0 4px 0 rgba(43,36,64,.12);}
+  .step-head{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .badge{background:var(--teal); color:#fff; font-weight:800; font-size:14px;
+    min-width:34px; height:34px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; flex-shrink:0; padding:0 8px;}
+  .badge.blk{border-radius:8px; background:var(--red);}
+  .step h2{font-size:16.5px;}
+  .hint{font-size:12.5px; color:#8a7f70; margin-left:44px; margin-bottom:8px;}
+  input[type=text]{width:100%; padding:11px 14px; font-size:15.5px;
+    border:2px solid var(--line); border-radius:10px; font-family:inherit; background:var(--paper);}
+  input[type=text]:focus{outline:none; border-color:var(--red);}
+  select{padding:9px 12px; font-size:14px; border:2px solid var(--line); border-radius:10px;
+    font-family:inherit; background:var(--paper);}
+
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); gap:9px;}
+  .card{border:2px solid var(--line); border-radius:12px; padding:11px 8px;
+    text-align:center; cursor:pointer; background:#fff; transition:.15s;}
+  .card .emo{font-size:24px; display:block; margin-bottom:3px;}
+  .card b{font-size:14px; display:block;}
+  .card small{font-size:10.5px; color:#8a7f70;}
+  .card.on{border-color:var(--red); background:var(--soft);
+    box-shadow:0 3px 0 var(--red); transform:translateY(-2px);}
+  .grouplabel{font-size:13px; font-weight:800; color:var(--teal); margin:12px 0 6px 4px;}
+
+  .autoLight{margin-top:10px; background:var(--soft); border-radius:10px;
+    padding:10px 14px; font-size:14px; display:none;}
+  .autoLight b{color:var(--red);}
+
+  /* 타임라인 3컷 */
+  .cutrow{display:flex; gap:8px; align-items:flex-start; margin-bottom:10px;}
+  .cutlabel{min-width:118px; border-radius:10px; padding:9px 8px; text-align:center;
+    color:#fff; font-weight:800; font-size:12.5px;}
+  .cl1{background:var(--red);} .cl2{background:var(--teal);} .cl3{background:var(--purple);}
+  .cutbody{flex:1;}
+  .cutbody input{margin-bottom:6px;}
+  .transrow{display:flex; align-items:center; gap:8px; font-size:12.5px; color:#8a7f70;}
+
+  .lock{background:var(--soft); border:2px dashed var(--teal); border-radius:12px;
+    padding:14px 18px; margin-bottom:16px; font-size:14px;}
+  .lock b{color:var(--teal);} .lock ul{margin:6px 0 0 20px; line-height:1.7;}
+
+  .ticket{position:relative; background:var(--yellow); border-radius:16px;
+    padding:22px 24px; margin:24px 0 14px; border:2px solid var(--ink);
+    box-shadow:0 5px 0 rgba(43,36,64,.2);}
+  .ticket::before,.ticket::after{content:""; position:absolute; width:26px; height:26px;
+    background:var(--paper); border:2px solid var(--ink); border-radius:50%; top:50%;
+    transform:translateY(-50%);}
+  .ticket::before{left:-15px;} .ticket::after{right:-15px;}
+  .ticket .label{font-size:12px; font-weight:800; letter-spacing:2px; opacity:.6; margin-bottom:8px;}
+  .tout{font-size:15px; line-height:1.75; font-weight:600; min-height:52px;
+    word-break:keep-all; white-space:pre-wrap;}
+  .tout .empty{opacity:.45; font-weight:400;}
+
+  .btnrow{display:flex; gap:10px;}
+  button{font-family:inherit; font-size:16px; font-weight:800; border:2px solid var(--ink);
+    border-radius:12px; padding:13px 22px; cursor:pointer; transition:.12s;}
+  .copyMain{flex:1; background:var(--red); color:#fff; box-shadow:0 4px 0 rgba(43,36,64,.25);}
+  .copyMain:active{transform:translateY(3px); box-shadow:none;}
+  .resetB{background:#fff;}
+  .done{background:var(--teal) !important;}
+
+  .music{margin-top:30px; background:#fff; border:2px solid var(--ink); border-radius:14px;
+    padding:18px 20px; box-shadow:0 4px 0 rgba(43,36,64,.12);}
+  .music h2{font-size:19px; margin-bottom:4px;}
+  .music .sub{font-size:13px; color:#8a7f70; margin-bottom:12px;}
+  .musicout{background:var(--soft); border-radius:10px; padding:12px 14px;
+    font-size:15px; margin-top:12px; min-height:46px;}
+  .musicout .empty{opacity:.45;}
+  #musicCopy{margin-top:10px; width:100%; background:var(--teal); color:#fff;
+    box-shadow:0 4px 0 rgba(43,36,64,.25);}
+  #musicCopy:active{transform:translateY(3px); box-shadow:none;}
+
+  .check{margin-top:24px; background:var(--night); color:#FFF9F0; border-radius:14px;
+    padding:18px 22px;}
+  .check h2{font-size:18px; margin-bottom:10px;} .check h2 em{font-style:normal; color:var(--yellow);}
+  .ck{display:flex; align-items:center; gap:10px; padding:9px 0; font-size:15px;
+    border-bottom:1px dashed rgba(255,249,240,.2); cursor:pointer;}
+  .ck:last-child{border:none;}
+  .ck input{width:20px; height:20px; accent-color:var(--yellow);}
+  .ck.done-line{opacity:.55; text-decoration:line-through;}
+  #allDone{display:none; margin-top:12px; background:var(--yellow); color:var(--ink);
+    border-radius:10px; padding:10px 14px; font-weight:800; text-align:center;}
+
+  footer{margin-top:40px; text-align:center; font-size:12px; color:#8a7f70;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="film">
+    <div class="holes"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="film-body">
+      <h1>🎥 영상 프롬프트 <em>감독실</em></h1>
+      <p>모드를 고르세요 — 처음엔 🌱 기본 모드, 익숙해지면 🎬 완성형 모드로!</p>
+    </div>
+    <div class="holes"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-pane="basic">🌱 기본 모드<small>여섯 칸 → 한 문장 프롬프트</small></div>
+    <div class="tab" data-pane="pro">🎬 완성형 모드<small>4블록 — 톤·에셋고정·타임라인·오디오</small></div>
+  </div>
+
+  <!-- ═══════════ 기본 모드 ═══════════ -->
+  <div class="pane on" id="basic">
+
+    <div class="step">
+      <div class="step-head"><span class="badge">1</span><h2>주인공 + 움직임</h2></div>
+      <p class="hint">예: 빨간 목도리를 한 여우가 눈길을 천천히 걸어간다</p>
+      <input type="text" id="e1" placeholder="누가, 어떻게 움직이나요?" oninput="buildBasic()">
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="badge">2</span><h2>배경 (어디·언제)</h2></div>
+      <input type="text" id="e2" placeholder="장소와 시간을 써 보세요" oninput="buildBasic()">
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="badge">3</span><h2>화풍·스타일</h2></div>
+      <div class="cards" id="styleCards">
+        <div class="card" data-v="따뜻한 색감의 2D 애니메이션풍"><span class="emo">🌸</span><b>애니풍</b></div>
+        <div class="card" data-v="실사 영화 스타일"><span class="emo">📷</span><b>실사풍</b></div>
+        <div class="card" data-v="부드러운 수채화 그림책 스타일"><span class="emo">🎨</span><b>수채화풍</b></div>
+        <div class="card" data-v="귀여운 3D 애니메이션 스타일"><span class="emo">🧸</span><b>3D풍</b></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="badge">4</span><h2>카메라 — 어디서, 어떻게?</h2></div>
+      <div class="grouplabel">📐 앵글</div>
+      <div class="cards" id="angleCards">
+        <div class="card" data-v="와이드 샷"><span class="emo">🏞</span><b>와이드 샷</b><small>전체가 보여요</small></div>
+        <div class="card" data-v="클로즈업"><span class="emo">😊</span><b>클로즈업</b><small>감정이 보여요</small></div>
+        <div class="card" data-v="로우앵글"><span class="emo">⬆️</span><b>로우앵글</b><small>커 보여요</small></div>
+        <div class="card" data-v="하이앵글(부감)"><span class="emo">⬇️</span><b>하이앵글</b><small>내려다봐요</small></div>
+      </div>
+      <div class="grouplabel">🎢 무빙</div>
+      <div class="cards" id="moveCards">
+        <div class="card" data-v="천천히 줌인"><span class="emo">🔍</span><b>줌인</b></div>
+        <div class="card" data-v="천천히 줌아웃"><span class="emo">🌌</span><b>줌아웃</b></div>
+        <div class="card" data-v="인물을 따라 트래킹"><span class="emo">🏃</span><b>트래킹</b></div>
+        <div class="card" data-v="고정 카메라"><span class="emo">📌</span><b>고정</b></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="badge">5</span><h2>분위기를 고르면 → 조명은 자동!</h2></div>
+      <div class="cards" id="moodCards">
+        <div class="card" data-m="따뜻하고 포근한 분위기" data-l="황금빛 햇살 조명"><span class="emo">🧡</span><b>따뜻·포근</b></div>
+        <div class="card" data-m="설레고 경쾌한 분위기" data-l="밝고 환한 낮 빛"><span class="emo">🎈</span><b>신나·경쾌</b></div>
+        <div class="card" data-m="긴장감 있는 모험 분위기" data-l="주황빛 역광"><span class="emo">🗺</span><b>긴장·모험</b></div>
+        <div class="card" data-m="잔잔하고 감성적인 분위기" data-l="새벽의 푸른빛"><span class="emo">🌙</span><b>잔잔·감성</b></div>
+      </div>
+      <div class="autoLight" id="autoLight">💡 자동 조명: <b id="lightName"></b> — 분위기에 딱 맞는 빛이 골라졌어요!</div>
+    </div>
+
+    <div class="lock">🔒 <b>⑥ 기술사양 — 자동으로 붙는 약속</b>
+      <ul>
+        <li>길이·비율: 아래 <b>공통 설정</b>을 따라요 (기본 10초 · 세로 9:16)</li>
+        <li>화면에 <b>글자·자막 없음</b> · 실제 사람 얼굴·이름 넣지 않기</li>
+      </ul>
+    </div>
+
+    <div class="ticket">
+      <div class="label">🎟 MY VIDEO PROMPT TICKET</div>
+      <div class="tout" id="outBasic"><span class="empty">위의 칸을 채우면 여기에 영상 프롬프트가 만들어져요…</span></div>
+    </div>
+    <div class="btnrow">
+      <button class="copyMain" id="copyBasic" onclick="copyTicket('outBasic','copyBasic')">📋 프롬프트 복사하기</button>
+      <button class="resetB" onclick="resetBasic()">↺ 새로 만들기</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ 완성형 모드 ═══════════ -->
+  <div class="pane" id="pro">
+
+    <div class="step">
+      <div class="step-head"><span class="badge blk">제목</span><h2>영상 제목 — 무엇을 위한 영상인가요?</h2></div>
+      <p class="hint">예: 『겨울 여우』 북트레일러</p>
+      <input type="text" id="pTitle" placeholder="『책 제목』 북트레일러" oninput="buildPro()">
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="badge blk">블록1</span><h2>전체 톤 &amp; 카메라</h2></div>
+      <div class="grouplabel">🎭 분위기·장르</div>
+      <div class="cards" id="pMood">
+        <div class="card" data-v="따뜻하고 포근한 동화 톤" data-l="황금빛 햇살"><span class="emo">🧡</span><b>따뜻·포근</b></div>
+        <div class="card" data-v="설레고 활기찬 모험 영화 톤" data-l="밝고 환한 낮 빛"><span class="emo">🎈</span><b>신나·경쾌</b></div>
+        <div class="card" data-v="긴장감 있는 미스터리 톤" data-l="주황빛 역광"><span class="emo">🗺</span><b>긴장·모험</b></div>
+        <div class="card" data-v="잔잔하고 감성적인 예고편 톤" data-l="새벽의 푸른빛"><span class="emo">🌙</span><b>잔잔·감성</b></div>
+      </div>
+      <div class="grouplabel">🎨 색감·필름룩</div>
+      <div class="cards" id="pColor">
+        <div class="card" data-v="밝고 채도 높은 색감"><span class="emo">🌈</span><b>밝고 쨍한</b></div>
+        <div class="card" data-v="깊고 따뜻한 색감"><span class="emo">🍂</span><b>깊고 따뜻한</b></div>
+        <div class="card" data-v="은은한 파스텔 색감"><span class="emo">🍬</span><b>파스텔</b></div>
+        <div class="card" data-v="빛바랜 빈티지 필름룩"><span class="emo">🎞</span><b>빈티지 필름</b></div>
+      </div>
+      <div class="grouplabel">🔍 심도 (배경 흐림)</div>
+      <div class="cards" id="pDepth">
+        <div class="card" data-v="배경이 부드럽게 흐려지는 얕은 심도(보케)"><span class="emo">✨</span><b>보케</b><small>주인공만 선명</small></div>
+        <div class="card" data-v="전체가 또렷한 깊은 심도"><span class="emo">🏞</span><b>전체 선명</b><small>배경까지 또렷</small></div>
+      </div>
+      <div class="grouplabel">🎢 카메라 워크</div>
+      <div class="cards" id="pCam">
+        <div class="card" data-v="안정적인 짐벌 카메라"><span class="emo">🛞</span><b>짐벌</b><small>흔들림 없이</small></div>
+        <div class="card" data-v="생생한 핸드헬드"><span class="emo">✋</span><b>핸드헬드</b><small>생생하게</small></div>
+        <div class="card" data-v="부드러운 슬로모션"><span class="emo">🐢</span><b>슬로모션</b><small>천천히</small></div>
+        <div class="card" data-v="드론 부감 샷"><span class="emo">🚁</span><b>드론 부감</b><small>하늘에서</small></div>
+      </div>
+      <div class="autoLight" id="pAutoLight">💡 자동 조명: <b id="pLightName"></b>이(가) 톤 설명에 함께 들어가요!</div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="badge blk">블록2</span><h2>인물·에셋 고정 — 컷마다 똑같이!</h2></div>
+      <p class="hint">주인공의 나이·표정·옷차림, 배경 소품을 구체적으로. 예: 10살 소녀, 호기심 가득한 표정, 노란 우비, 빨간 장화 · 배경엔 낡은 나무 문</p>
+      <input type="text" id="pAsset" placeholder="주인공과 소품을 구체적으로 써 보세요" oninput="buildPro()">
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="badge blk">블록3</span><h2>타임라인 구성 &amp; 연출</h2></div>
+      <p class="hint">※ 화면 글자·자막은 넣지 않아요 — 글자는 Canva 편집에서!</p>
+
+      <div class="cutrow">
+        <div class="cutlabel cl1" id="lb1">① 오프닝<br>(0~3초)</div>
+        <div class="cutbody">
+          <input type="text" id="pCut1" placeholder="시선 끌기 — 어떤 장면으로 시작하나요?" oninput="buildPro()">
+          <div class="transrow">전환효과
+            <select id="pT1" onchange="buildPro()">
+              <option value="부드러운 디졸브 전환">부드러운 디졸브</option>
+              <option value="빠른 컷 전환">빠른 컷</option>
+              <option value="화이트 페이드 전환">화이트 페이드</option>
+              <option value="줌 전환">줌 전환</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="cutrow">
+        <div class="cutlabel cl2" id="lb2">② 인서트<br>(3~7초)</div>
+        <div class="cutbody">
+          <input type="text" id="pCut2" placeholder="사건의 순간 — 가장 두근거리는 장면은?" oninput="buildPro()">
+          <div class="transrow">전환효과
+            <select id="pT2" onchange="buildPro()">
+              <option value="부드러운 디졸브 전환">부드러운 디졸브</option>
+              <option value="빠른 컷 전환">빠른 컷</option>
+              <option value="화이트 페이드 전환">화이트 페이드</option>
+              <option value="줌 전환">줌 전환</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="cutrow">
+        <div class="cutlabel cl3" id="lb3">③ 엔딩<br>(7~10초)</div>
+        <div class="cutbody">
+          <input type="text" id="pCut3" placeholder="궁금증 남기기 — 결말 직전에서 멈춰요!" oninput="buildPro()">
+          <div class="transrow">마무리 효과
+            <select id="pT3" onchange="buildPro()">
+              <option value="천천히 페이드아웃">천천히 페이드아웃</option>
+              <option value="슬로모션으로 부드러운 마무리">슬로모션 마무리</option>
+              <option value="정지화면으로 여운 있는 마무리">정지화면 마무리</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="badge blk">블록4</span><h2>오디오 — BGM · 내레이션 · 효과음</h2></div>
+      <div class="grouplabel">🎵 BGM</div>
+      <div class="cards" id="pBgm">
+        <div class="card" data-v="밝고 경쾌한 동요풍 BGM"><span class="emo">🎈</span><b>밝은 동요풍</b></div>
+        <div class="card" data-v="잔잔하게 시작해 점점 벅차오르는 BGM"><span class="emo">🌊</span><b>점점 벅차오르는</b></div>
+        <div class="card" data-v="두근두근 모험 영화풍 BGM"><span class="emo">🥁</span><b>모험 영화풍</b></div>
+        <div class="card" data-v="잔잔하고 감성적인 피아노 BGM"><span class="emo">🎹</span><b>잔잔한 피아노</b></div>
+      </div>
+      <div class="grouplabel">🗣 내레이션 (없어도 돼요)</div>
+      <div class="cards" id="pNarr">
+        <div class="card on" data-v=""><span class="emo">🤫</span><b>없음</b><small>음악만으로!</small></div>
+        <div class="card" data-v="따뜻한 여성 목소리"><span class="emo">👩</span><b>따뜻한 여성</b></div>
+        <div class="card" data-v="차분한 남성 목소리"><span class="emo">👨</span><b>차분한 남성</b></div>
+      </div>
+      <input type="text" id="pNarrLine" placeholder="내레이션 대사 (예: '올겨울, 여우의 비밀이 열린다')" oninput="buildPro()" style="margin-top:8px;">
+      <div class="grouplabel">🔔 SFX 효과음 (선택)</div>
+      <input type="text" id="pSfx" placeholder="예: 눈 밟는 소리 · 엔딩에 문 열리는 소리" oninput="buildPro()">
+    </div>
+
+    <div class="ticket">
+      <div class="label">🎟 MY 4-BLOCK PROMPT TICKET</div>
+      <div class="tout" id="outPro"><span class="empty">블록을 채우면 완성형 프롬프트가 여기에 만들어져요…</span></div>
+    </div>
+    <div class="btnrow">
+      <button class="copyMain" id="copyPro" onclick="copyTicket('outPro','copyPro')">📋 완성형 프롬프트 복사하기</button>
+      <button class="resetB" onclick="resetPro()">↺ 새로 만들기</button>
+    </div>
+  </div>
+
+  <!-- ═══════════ 공통: 길이·화면비 / 음악 / 체크리스트 ═══════════ -->
+  <div class="step" style="margin-top:26px;">
+    <div class="step-head"><span class="badge" style="background:var(--ink);">공통</span><h2>길이·화면비 설정 (두 모드에 함께 적용)</h2></div>
+    <div class="grouplabel">📏 길이</div>
+    <div class="cards" id="gLen" style="grid-template-columns:1fr 1fr;">
+      <div class="card" data-v="8초"><span class="emo">⏱</span><b>8초</b><small>기본</small></div>
+      <div class="card on" data-v="10초"><span class="emo">⏱</span><b>약 10초</b><small>제미나이 옴니 기준</small></div>
+    </div>
+    <div class="grouplabel">📐 화면비</div>
+    <div class="cards" id="gRatio" style="grid-template-columns:1fr 1fr;">
+      <div class="card on" data-v="세로 9:16"><span class="emo">📱</span><b>세로 9:16</b><small>일반·쇼츠</small></div>
+      <div class="card" data-v="가로 16:9"><span class="emo">🖥</span><b>가로 16:9</b><small>SNS·유튜브</small></div>
+    </div>
+    <div class="lock" style="margin-top:14px; margin-bottom:0;">🔒 두 모드 모두 자동으로 붙어요:
+      <b>화면에 글자·자막 없음(글자는 편집에서)</b> · 실제 사람 얼굴·이름 금지</div>
+  </div>
+
+  <div class="music">
+    <h2>🎵 음악 프롬프트 코너 (Suno용)</h2>
+    <p class="sub">기본 모드의 분위기 또는 완성형 모드의 BGM을 고르면 자동으로 만들어져요. 가사 없는 연주곡으로!</p>
+    <div class="musicout" id="musicOut"><span class="empty">분위기나 BGM을 고르면 음악 프롬프트가 나타나요…</span></div>
+    <button id="musicCopy" onclick="copyTicket('musicOut','musicCopy')">📋 음악 프롬프트 복사하기</button>
+  </div>
+
+  <div class="check">
+    <h2>✅ Flow 출발 전 <em>체크리스트</em> (무료 사용자 약속)</h2>
+    <label class="ck"><input type="checkbox" onchange="ckUpdate(this)"> 에이전트 기능 <b>&nbsp;끄기</b></label>
+    <label class="ck"><input type="checkbox" onchange="ckUpdate(this)"> 화면비 확인 — 수업 기준 <b>&nbsp;9:16</b></label>
+    <label class="ck"><input type="checkbox" onchange="ckUpdate(this)"> 생성 개수 <b>&nbsp;1개</b>만</label>
+    <label class="ck"><input type="checkbox" onchange="ckUpdate(this)"> 완성되면 바로 <b>&nbsp;다운로드</b></label>
+    <div id="allDone">🚀 준비 완료! 이제 프롬프트를 붙여넣고 생성 버튼!</div>
+  </div>
+
+  <footer>북트레일러 만들기 2회기 · AI와 함께 나도 작가</footer>
+</div>
+
+<script>
+/* ── 상태 ── */
+let S={style:"",angle:"",move:"",mood:"",light:"",              // 기본
+       pMood:"",pLight:"",pColor:"",pDepth:"",pCam:"",pBgm:"",pNarr:"",  // 완성형
+       len:"10초",ratio:"세로 9:16"};                            // 공통
+
+const musicMap={
+  "따뜻하고 포근한 분위기":"밝고 따뜻한 동요풍 배경음악, 잔잔한 피아노, 가사 없는 연주곡(instrumental)",
+  "설레고 경쾌한 분위기":"신나고 경쾌한 팝 스타일 배경음악, 밝은 리듬, 가사 없는 연주곡(instrumental)",
+  "긴장감 있는 모험 분위기":"두근두근 모험 영화풍 배경음악, 점점 커지는 리듬, 가사 없는 연주곡(instrumental)",
+  "잔잔하고 감성적인 분위기":"잔잔하고 감성적인 피아노 배경음악, 느린 템포, 가사 없는 연주곡(instrumental)",
+  "밝고 경쾌한 동요풍 BGM":"밝고 경쾌한 동요풍 배경음악, 가사 없는 연주곡(instrumental)",
+  "잔잔하게 시작해 점점 벅차오르는 BGM":"잔잔하게 시작해 점점 벅차오르는 배경음악, 가사 없는 연주곡(instrumental)",
+  "두근두근 모험 영화풍 BGM":"두근두근 모험 영화풍 배경음악, 점점 커지는 리듬, 가사 없는 연주곡(instrumental)",
+  "잔잔하고 감성적인 피아노 BGM":"잔잔하고 감성적인 피아노 배경음악, 느린 템포, 가사 없는 연주곡(instrumental)"
+};
+
+/* ── 탭 ── */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    document.getElementById(t.dataset.pane).classList.add('on');
+  };
+});
+
+/* ── 카드 그룹 헬퍼 ── */
+function pick(gridId, cb, allowNone){
+  document.querySelectorAll('#'+gridId+' .card').forEach(c=>{
+    c.onclick=()=>{
+      document.querySelectorAll('#'+gridId+' .card').forEach(x=>x.classList.remove('on'));
+      c.classList.add('on'); cb(c); buildBasic(); buildPro();
+    };
+  });
+}
+pick('styleCards',c=>S.style=c.dataset.v);
+pick('angleCards',c=>S.angle=c.dataset.v);
+pick('moveCards', c=>S.move =c.dataset.v);
+pick('moodCards', c=>{
+  S.mood=c.dataset.m; S.light=c.dataset.l;
+  document.getElementById('lightName').textContent=S.light;
+  document.getElementById('autoLight').style.display='block';
+  setMusic(musicMap[S.mood]);
+});
+pick('pMood',c=>{
+  S.pMood=c.dataset.v; S.pLight=c.dataset.l;
+  document.getElementById('pLightName').textContent=S.pLight;
+  document.getElementById('pAutoLight').style.display='block';
+});
+pick('pColor',c=>S.pColor=c.dataset.v);
+pick('pDepth',c=>S.pDepth=c.dataset.v);
+pick('pCam',  c=>S.pCam =c.dataset.v);
+pick('pBgm',  c=>{S.pBgm=c.dataset.v; setMusic(musicMap[S.pBgm]);});
+pick('pNarr', c=>S.pNarr=c.dataset.v);
+pick('gLen',  c=>{S.len=c.dataset.v; updateTimelineLabels();});
+pick('gRatio',c=>S.ratio=c.dataset.v);
+
+function setMusic(t){
+  if(!t)return;
+  document.getElementById('musicOut').textContent=t;
+}
+
+/* ── 타임라인 초 표시: 8초=0~2/2~5/5~8, 10초=0~3/3~7/7~10 ── */
+function updateTimelineLabels(){
+  const t = S.len==='8초' ? ['(0~2초)','(2~5초)','(5~8초)'] : ['(0~3초)','(3~7초)','(7~10초)'];
+  document.getElementById('lb1').innerHTML='① 오프닝<br>'+t[0];
+  document.getElementById('lb2').innerHTML='② 인서트<br>'+t[1];
+  document.getElementById('lb3').innerHTML='③ 엔딩<br>'+t[2];
+}
+
+const v=id=>document.getElementById(id).value.trim();
+const lenText=()=> S.len==='10초' ? '약 10초(제미나이 옴니 기준)' : '8초';
+
+/* ── 기본 모드 조립 ── */
+function buildBasic(){
+  const e1=v('e1'), e2=v('e2');
+  const out=document.getElementById('outBasic');
+  if(!e1&&!e2&&!S.style&&!S.angle&&!S.move&&!S.mood){
+    out.innerHTML='<span class="empty">위의 칸을 채우면 여기에 영상 프롬프트가 만들어져요…</span>'; return;
+  }
+  const parts=[];
+  if(e1) parts.push(e1);
+  if(e2) parts.push(e2+' 배경');
+  if(S.style) parts.push(S.style);
+  const cam=[S.angle,S.move].filter(Boolean).join('에서 ');
+  if(cam) parts.push('카메라는 '+cam);
+  if(S.light) parts.push(S.light);
+  if(S.mood) parts.push(S.mood);
+  parts.push(lenText()+', '+S.ratio+', 화면에 글자 없음');
+  out.textContent=parts.join('. ')+'.';
+}
+
+/* ── 완성형 모드 조립 (4블록) ── */
+function buildPro(){
+  const out=document.getElementById('outPro');
+  const title=v('pTitle'), asset=v('pAsset');
+  const c1=v('pCut1'), c2=v('pCut2'), c3=v('pCut3');
+  const narrLine=v('pNarrLine'), sfx=v('pSfx');
+
+  if(!title&&!asset&&!c1&&!c2&&!c3&&!S.pMood&&!S.pColor&&!S.pCam){
+    out.innerHTML='<span class="empty">블록을 채우면 완성형 프롬프트가 여기에 만들어져요…</span>'; return;
+  }
+
+  const t = S.len==='8초' ? ['0~2초','2~5초','5~8초'] : ['0~3초','3~7초','7~10초'];
+  const L=[];
+
+  if(title) L.push('[영상 제목] '+title);
+
+  const tone=[S.pMood,S.pColor,S.pLight?S.pLight+' 조명':'',S.pDepth,S.pCam].filter(Boolean).join(', ');
+  if(tone) L.push('[전체 톤 & 카메라] '+tone+'. 화면 글자·자막은 넣지 않기.');
+
+  if(asset) L.push('[인물·에셋 고정] '+asset+' (모든 컷에서 동일하게 유지, 실제 인물 아님).');
+
+  if(c1||c2||c3){
+    L.push('[타임라인 구성 & 연출]');
+    if(c1) L.push('1. 오프닝('+t[0]+'): '+c1+' · '+document.getElementById('pT1').value+'.');
+    if(c2) L.push('2. 인서트('+t[1]+'): '+c2+' · '+document.getElementById('pT2').value+'.');
+    if(c3) L.push('3. 엔딩('+t[2]+'): '+c3+' · '+document.getElementById('pT3').value+'.');
+  }
+
+  const audio=[];
+  if(S.pBgm) audio.push('BGM '+S.pBgm);
+  if(S.pNarr) audio.push('내레이션 '+S.pNarr+(narrLine?"로 '"+narrLine+"'":''));
+  if(sfx) audio.push('SFX '+sfx);
+  if(audio.length) L.push('[오디오] '+audio.join(' / '));
+
+  L.push('[길이·화면비] '+S.ratio+' · '+lenText()+'. 화면에 글자·자막 없음.');
+
+  out.textContent=L.join('\n');
+}
+
+/* ── 복사 공통 ── */
+function flash(btn){const old=btn.textContent; btn.textContent='✅ 복사 완료!';
+  btn.classList.add('done'); setTimeout(()=>{btn.textContent=old; btn.classList.remove('done');},1400);}
+function copyTicket(outId,btnId){
+  const t=document.getElementById(outId).textContent;
+  if(t.includes('만들어져요')||t.includes('나타나요'))return;
+  const btn=document.getElementById(btnId);
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(()=>flash(btn)).catch(()=>fallback(t,btn));
+  } else fallback(t,btn);
+}
+function fallback(t,btn){const ta=document.createElement('textarea'); ta.value=t;
+  document.body.appendChild(ta); ta.select();
+  try{document.execCommand('copy'); flash(btn);}catch(e){alert('길게 눌러 직접 복사해 주세요');}
+  document.body.removeChild(ta);}
+
+/* ── 체크리스트 & 리셋 ── */
+function ckUpdate(cb){
+  cb.parentElement.classList.toggle('done-line',cb.checked);
+  const all=[...document.querySelectorAll('.ck input')].every(x=>x.checked);
+  document.getElementById('allDone').style.display=all?'block':'none';
+}
+function resetBasic(){
+  ['e1','e2'].forEach(id=>document.getElementById(id).value='');
+  ['styleCards','angleCards','moveCards','moodCards'].forEach(g=>
+    document.querySelectorAll('#'+g+' .card').forEach(x=>x.classList.remove('on')));
+  S.style=S.angle=S.move=S.mood=S.light="";
+  document.getElementById('autoLight').style.display='none';
+  buildBasic();
+}
+function resetPro(){
+  ['pTitle','pAsset','pCut1','pCut2','pCut3','pNarrLine','pSfx'].forEach(id=>document.getElementById(id).value='');
+  ['pMood','pColor','pDepth','pCam','pBgm','pNarr'].forEach(g=>
+    document.querySelectorAll('#'+g+' .card').forEach(x=>x.classList.remove('on')));
+  document.querySelector('#pNarr .card').classList.add('on'); // '없음' 복원
+  S.pMood=S.pLight=S.pColor=S.pDepth=S.pCam=S.pBgm=S.pNarr="";
+  document.getElementById('pAutoLight').style.display='none';
+  buildPro();
+}
+</script>
+</body>
+</html>
